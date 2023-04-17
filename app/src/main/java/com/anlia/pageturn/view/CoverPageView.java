@@ -20,7 +20,7 @@ import com.anlia.pageturn.utils.ViewUtils;
  * Created by anlia on 2017/12/11.
  */
 
-public class CoverPageView extends View {
+public class CoverPageView extends BasePageView {
     private int defaultWidth;//默认宽度
     private int defaultHeight;//默认高度
     private int viewWidth;

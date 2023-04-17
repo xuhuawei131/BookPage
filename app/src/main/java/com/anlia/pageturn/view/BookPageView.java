@@ -8,8 +8,11 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Region;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
 import android.os.Trace;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -25,7 +28,7 @@ import com.anlia.pageturn.bean.MyPoint;
  * Created by anlia on 2017/10/19.
  */
 
-public class BookPageView extends View {
+public class BookPageView extends BasePageView {
     private Paint pointPaint;//绘制各标识点的画笔
     private Paint bgPaint;//背景画笔
     private Paint pathAPaint;//绘制A区域画笔
@@ -208,17 +211,17 @@ public class BookPageView extends View {
                 drawPathBContent(canvas,getPathAFromTopRight());
             }else if(f.x==viewWidth && f.y==viewHeight){
 
-                beginTrace("drawPathA");
+//                beginTrace("drawPathA");
                 drawPathAContent(canvas,getPathAFromLowerRight());
-                endTrace();
+//                endTrace();
 
-                beginTrace("drawPathC");
+//                beginTrace("drawPathC");
                 drawPathCContent(canvas,getPathAFromLowerRight());
-                endTrace();
+//                endTrace();
 
-                beginTrace("drawPathB");
+//                beginTrace("drawPathB");
                 drawPathBContent(canvas,getPathAFromLowerRight());
-                endTrace();
+//                endTrace();
             }
         }
 
@@ -451,7 +454,13 @@ public class BookPageView extends View {
         }
         canvas.restore();
     }
-
+    private void clip(Canvas canvas, Path path, Region.Op op){
+        if(Build.VERSION.SDK_INT >= 28){
+            canvas.clipPath(path);
+        }else {
+            canvas.clipPath(path, op);//裁剪出C区域不同于A区域的部分
+        }
+    }
     /**
      * 绘制A区域左阴影
      * @param canvas
@@ -609,8 +618,11 @@ public class BookPageView extends View {
     private void drawPathBContent(Canvas canvas, Path pathA){
         canvas.save();
         canvas.clipPath(pathA);//裁剪出A区域
-        canvas.clipPath(getPathC(),Region.Op.UNION);//裁剪出A和C区域的全集
-        canvas.clipPath(getPathB(), Region.Op.REVERSE_DIFFERENCE);//裁剪出B区域中不同于与AC区域的部分
+
+        clip(canvas,getPathC(),Region.Op.UNION);
+        clip(canvas,getPathB(),Region.Op.REVERSE_DIFFERENCE);
+//        canvas.clipPath(getPathC(),Region.Op.UNION);//裁剪出A和C区域的全集
+//        canvas.clipPath(getPathB(), Region.Op.REVERSE_DIFFERENCE);//裁剪出B区域中不同于与AC区域的部分
         canvas.drawBitmap(pathBContentBitmap, 0, 0, null);
 
         drawPathBShadow(canvas);
@@ -673,7 +685,9 @@ public class BookPageView extends View {
     private void drawPathCContent(Canvas canvas, Path pathA){
         canvas.save();
         canvas.clipPath(pathA);
-        canvas.clipPath(getPathC(), Region.Op.REVERSE_DIFFERENCE);//裁剪出C区域不同于A区域的部分
+
+        clip(canvas,getPathC(),Region.Op.REVERSE_DIFFERENCE);
+//        canvas.clipPath(getPathC(), Region.Op.REVERSE_DIFFERENCE);//裁剪出C区域不同于A区域的部分
 //        canvas.drawPath(getPathC(),pathCPaint);
 
         float eh = (float) Math.hypot(f.x - e.x,h.y - f.y);
